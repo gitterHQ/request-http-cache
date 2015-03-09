@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/gitterHQ/request-http-cache",
   "devDependencies": {
+    "coveralls": "^2.11.2",
     "gulp": "^3.8.11",
     "gulp-spawn-mocha": "^2.0.1",
     "mocha": "^2.1.0",
