@@ -1,0 +1,13 @@
+package gitter.http.cache;
+
+message HttpCacheMessage {
+  required string statusCode = 1;
+
+  message Header {
+    required string name = 1;
+    required string value = 2;
+  }
+
+  repeated Header headers = 2;
+  optional bytes bodyCompressed = 3;
+}

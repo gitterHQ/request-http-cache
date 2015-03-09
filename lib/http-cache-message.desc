@@ -1,0 +1,11 @@
+
+Ò
+http-cache-message.protogitter.http.cache"¢
+HttpCacheMessage
+
+statusCode (	;
+headers (2*.gitter.http.cache.HttpCacheMessage.Header
+bodyCompressed (%
+Header
+name (	
+value (	

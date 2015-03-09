@@ -1,0 +1,42 @@
+{
+  "name": "request-http-cache",
+  "version": "1.0.0",
+  "description": "HTTP Caching extension for request-extensible",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitterHQ/request-http-cache.git"
+  },
+  "keywords": [
+    "HTTP",
+    "Request",
+    "ETag",
+    "request-extensible",
+    "caching"
+  ],
+  "author": "Andrew Newdigate <andrewn@datatribe.net> (http://about.me/andrewnewdigate)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gitterHQ/request-http-cache/issues"
+  },
+  "homepage": "https://github.com/gitterHQ/request-http-cache",
+  "devDependencies": {
+    "gulp": "^3.8.11",
+    "gulp-spawn-mocha": "^2.0.1",
+    "mocha": "^2.1.0",
+    "nock": "^0.59.1",
+    "redis": "^0.12.1",
+    "request": "^2.53.0",
+    "sinon": "^1.13.0"
+  },
+  "dependencies": {
+    "lodash": "^3.3.1",
+    "lru-cache": "^2.5.0",
+    "protobuf": "^0.11.0",
+    "redis": "^0.12.1",
+    "wreck": "^5.2.0"
+  }
+}
