@@ -9,9 +9,76 @@ Gitter's communications with GitHub.
 npm install request-http-cache
 ```
 
-## TODO
+## About
 
-Document this library
+This module is intended for use with [request-extensible](https://github.com/suprememoocow/request-extensible).
+
+It is designed to honor the HTTP caching semantics used by the GitHub API and use
+Conditional Requests, using ETags, for stale responses.
+
+Currently, it has been specifically designed for caching GitHub API responses.
+It makes some assumptions about access tokens and `Vary` headers which may result
+in incorrect results for other APIs, altough this is not necessarily the case.
+
+In future, ideally this module would adhere to the HTTP specification and be
+useable for any API.
+
+## Using
+
+### Using with an in-memory Backend
+
+```javascript
+var requestExt = require('request-extensible');
+var RequestHttpCache = require('request-http-cache');
+
+var httpRequestCache = new RequestHttpCache({
+  max: 1024*1024 // Maximum cache size (1mb) defaults to 512Kb
+});
+
+var request = requestExt({
+  extensions: [
+    httpRequestCache.extension
+  ]
+});
+
+// Now use request as you would request/request
+request({ url: 'https://api.github.com/users/suprememoocow' }, function(err, response, body) {
+
+});
+```
+
+### Using with a Redis Backend
+
+When using with a Redis backend, it's highly recommended to use `maxmemory` and
+`maxmemory-policy` configurations to ensure that the Redis memory usage doesn't
+grow out of control.
+
+```javascript
+var requestExt = require('request-extensible');
+var RequestHttpCache = require('request-http-cache');
+
+var httpRequestCache = new RequestHttpCache({
+  backend: 'redis',
+  redis: {
+    host: "localhost",
+    port: 6379
+  },
+  redisClient: redisClient, // Or you can pass in your Redis client
+  ttl: 86400                // Maximum cached response time
+});
+
+var request = requestExt({
+  extensions: [
+    httpRequestCache.extension
+  ]
+});
+
+// Now use request as you would request/request
+request({ url: 'https://api.github.com/users/suprememoocow' }, function(err, response, body) {
+
+});
+
+```
 
 # Licence
 
