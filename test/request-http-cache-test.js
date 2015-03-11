@@ -4,6 +4,10 @@ var TEST_ENDPOINT = 'https://api.github.com';
 var nock = require('nock');
 var assert = require('assert');
 var sinon = require('sinon');
+var keyGenerator = require('../lib/key-generator');
+
+var MIME_JSON = "application/json";
+var MIME_TEXT = "text/plain";
 
 describe('request-http-cache', function() {
   var scope;
@@ -16,35 +20,6 @@ describe('request-http-cache', function() {
     scope.done();
   });
 
-  describe('obtaining access tokens', function() {
-    it('should extract the accessToken from the auth header', function() {
-      var httpRequestCache = new RequestHttpCache();
-
-      var accessToken = httpRequestCache._getAccessToken({
-        url: 'https://gitter.im',
-        headers: {
-          'authorization': 'token 1234'
-        }
-      });
-
-      assert.strictEqual(accessToken, '1234');
-    });
-
-    it('should extract the accessToken from the query string', function() {
-      var httpRequestCache = new RequestHttpCache();
-
-      var accessToken = httpRequestCache._getAccessToken({
-        url: 'https://gitter.im?access_token=3456',
-        headers: {
-          'authorization': ''
-        }
-      });
-
-      assert.strictEqual(accessToken, '3456');
-    });
-
-  });
-
   describe('non-GET methods', function() {
 
     it('should not intercept non-get methods', function(done) {
@@ -52,7 +27,7 @@ describe('request-http-cache', function() {
            .reply(200, "POSTED");
 
       var mockBackend = new RequestHttpCache.backends.InMemory();
-      mockBackend.getKey = function() {
+      mockBackend.getEtagExpiry = function() {
         assert(false, 'Caching should be bypassed for non-GET operations');
       };
 
@@ -74,7 +49,7 @@ describe('request-http-cache', function() {
 
   describe('normal operation', function() {
 
-    describe('it should handle total misses', function(done) {
+    describe('it should handle total misses', function() {
       var httpRequestCache;
       var err, path, response, body, responseBody, statusCode, headers;
       var backend;
@@ -133,19 +108,19 @@ describe('request-http-cache', function() {
 
     describe('it should handle total hits', function() {
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers;
-      var backend;
+      var err, path, response, body;
 
       beforeEach(function(done) {
         var mockBackend = new RequestHttpCache.backends.InMemory();
-        var k = mockBackend.getKey('https://api.github.com' + path, null);
+        var k = keyGenerator('https://api.github.com' + path, {}, null);
 
         mockBackend.store(k, {
+          url: 'https://api.github.com' + path,
           statusCode: 200,
           etag: '1234',
           expiry: Date.now() + 1000,
           headers: {
-            'content-type': 'application/json'
+            'content-type': MIME_JSON
           },
           body: JSON.stringify({ hello: 'cached' })
         }, function() {});
@@ -173,15 +148,14 @@ describe('request-http-cache', function() {
       it('should return a response', function() {
         assert(!err);
         assert.strictEqual(response.statusCode, 200);
-        assert.strictEqual(response.headers['content-type'], 'application/json');
+        assert.strictEqual(response.headers['content-type'], MIME_JSON);
         assert.deepEqual(body, "{\"hello\":\"cached\"}");
       });
     });
 
     describe('it should handle etag hits', function() {
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers, updateExpirySpy;
-      var backend;
+      var err, path, response, body;
 
       beforeEach(function(done) {
         scope.get(path)
@@ -189,15 +163,17 @@ describe('request-http-cache', function() {
             .reply(304, null, { 'cache-control': 'private, max-age=60, s-maxage=60' } );
 
         var mockBackend = new RequestHttpCache.backends.InMemory();
-        var k = mockBackend.getKey('https://api.github.com' + path, null);
+        var k = keyGenerator('https://api.github.com' + path, {}, null);
+
         updateExpirySpy = sinon.spy(mockBackend, "updateExpiry");
 
         mockBackend.store(k, {
+          url: 'https://api.github.com' + path,
           statusCode: 200,
           etag: '1234',
           expiry: Date.now() - 1000,
           headers: {
-            'content-type': 'application/json'
+            'content-type': MIME_JSON
           },
           body: JSON.stringify({ hello: 'cached' })
         }, function() {});
@@ -224,7 +200,7 @@ describe('request-http-cache', function() {
       it('should return a response', function() {
         assert(!err);
         assert.strictEqual(response.statusCode, 200);
-        assert.strictEqual(response.headers['content-type'], 'application/json');
+        assert.strictEqual(response.headers['content-type'], MIME_JSON);
         assert(updateExpirySpy.calledOnce);
         assert.deepEqual(body, "{\"hello\":\"cached\"}");
       });
@@ -233,23 +209,23 @@ describe('request-http-cache', function() {
     describe('it should handle etag missed', function() {
 
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers;
-      var backend;
+      var err, path, response, body;
 
       beforeEach(function(done) {
         scope.get(path)
              .matchHeader('if-none-match', '1234')
-             .reply(200, JSON.stringify({ hello: 'missed' }), { 'Content-Type': 'application/json' });
+             .reply(200, JSON.stringify({ hello: 'missed' }), { 'Content-Type': MIME_JSON });
 
         var mockBackend = new RequestHttpCache.backends.InMemory();
-        var k = mockBackend.getKey('https://api.github.com' + path, null);
+        var k = keyGenerator('https://api.github.com' + path, {}, null);
 
         mockBackend.store(k, {
+          url: 'https://api.github.com' + path,
           statusCode: 200,
           etag: '1234',
           expiry: Date.now() - 1000,
           headers: {
-            'content-type': 'application/json'
+            'content-type': MIME_JSON
           },
           body: JSON.stringify({ hello: 'cached' })
         }, function() {});
@@ -276,7 +252,7 @@ describe('request-http-cache', function() {
       it('should return a response', function() {
         assert(!err);
         assert.strictEqual(response.statusCode, 200);
-        assert.strictEqual(response.headers['content-type'], 'application/json');
+        assert.strictEqual(response.headers['content-type'], MIME_JSON);
         assert.deepEqual(body, "{\"hello\":\"missed\"}");
       });
 
@@ -287,8 +263,6 @@ describe('request-http-cache', function() {
 
     it('should handle backend failures for obtaining the etag', function(done) {
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers;
-      var backend;
 
       scope.get('/error1')
            .reply(200, "OK");
@@ -317,8 +291,6 @@ describe('request-http-cache', function() {
 
     it('should handle errors retrieving the content from the cache on fresh access', function(done) {
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers;
-      var backend;
 
       scope.get('/error2.1')
            .reply(200, "NOT CACHED");
@@ -330,15 +302,15 @@ describe('request-http-cache', function() {
         }, 1);
       });
 
-
-      var k = mockBackend.getKey('https://api.github.com/error2.1', null);
+      var k = keyGenerator('https://api.github.com/error2.1', {}, null);
 
       mockBackend.store(k, {
+        url: 'https://api.github.com/error2.1',
         statusCode: 200,
         etag: '1234',
         expiry: Date.now() + 1000,
         headers: {
-          'content-type': 'application/json'
+          'content-type': MIME_JSON
         },
         body: JSON.stringify({ hello: 'cached' })
       }, function() {});
@@ -363,8 +335,6 @@ describe('request-http-cache', function() {
 
     it('should handle errors retrieving the content from the cache on non-fresh access', function(done) {
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers;
-      var backend;
 
       scope.get('/error2')
            .matchHeader('if-none-match', '1234')
@@ -381,14 +351,15 @@ describe('request-http-cache', function() {
       });
 
 
-      var k = mockBackend.getKey('https://api.github.com/error2', null);
+      var k = keyGenerator('https://api.github.com/error2');
 
       mockBackend.store(k, {
+        url: 'https://api.github.com/error2',
         statusCode: 200,
         etag: '1234',
         expiry: Date.now() - 1000,
         headers: {
-          'content-type': 'application/json'
+          'content-type': MIME_JSON
         },
         body: JSON.stringify({ hello: 'cached' })
       }, function() {});
@@ -412,8 +383,6 @@ describe('request-http-cache', function() {
 
     it('should handle errors updating the cache', function(done) {
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers;
-      var backend;
 
       scope.get('/error3')
            .reply(200, "NOT CACHED2");
@@ -441,22 +410,21 @@ describe('request-http-cache', function() {
 
     it('should handle JSON parsing problems', function(done) {
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers;
-      var backend;
 
       scope.get('/parseError')
-           .reply(200, JSON.stringify({ hello: 'fetched '}), { headers: { 'Content-Type': 'application/json '}});
+           .reply(200, JSON.stringify({ hello: 'fetched '}), { headers: { 'Content-Type': MIME_JSON }});
 
       var mockBackend = new RequestHttpCache.backends.InMemory();
-      var k = mockBackend.getKey('https://api.github.com/parseError', null);
+      var k = keyGenerator('https://api.github.com/parseError', { }, null);
       var getContentSpy = sinon.spy(mockBackend, "getContent");
 
       mockBackend.store(k, {
+        url: 'https://api.github.com/parseError',
         statusCode: 200,
         etag: '2345',
         expiry: Date.now() + 1000,
         headers: {
-          'content-type': 'application/json'
+          'content-type': MIME_JSON
         },
         body: "BROKEN JSON"
       }, function() {});
@@ -479,22 +447,21 @@ describe('request-http-cache', function() {
 
     it('should return non-fresh content when the service is unavailable', function(done) {
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers;
-      var backend;
 
       scope.get('/unavailable')
            .reply(500);
 
       var mockBackend = new RequestHttpCache.backends.InMemory();
-      var k = mockBackend.getKey('https://api.github.com/unavailable', null);
+      var k = keyGenerator('https://api.github.com/unavailable', {}, null);
       var getContentSpy = sinon.spy(mockBackend, "getContent");
 
       mockBackend.store(k, {
+        url: 'https://api.github.com/unavailable',
         statusCode: 200,
         etag: '2345',
         expiry: Date.now() - 1000, // Expired
         headers: {
-          'content-type': 'text/plain'
+          'content-type': MIME_TEXT
         },
         body: "OLD CONTENT"
       }, function() {});
@@ -516,24 +483,23 @@ describe('request-http-cache', function() {
 
     it('should return the original error on failure if the backend has an error', function(done) {
       var httpRequestCache;
-      var err, path, response, body, responseBody, headers;
-      var backend;
 
       scope.get('/unavailable2')
            .reply(500);
 
       var mockBackend = new RequestHttpCache.backends.InMemory();
-      var k = mockBackend.getKey('https://api.github.com/unavailable2', null);
+      var k = keyGenerator('https://api.github.com/unavailable2', {}, null);
       mockBackend.getContent = sinon.spy(function(key, callback) {
         callback(new Error());
       });
 
       mockBackend.store(k, {
+        url: 'https://api.github.com/unavailable2',
         statusCode: 200,
         etag: '2345',
         expiry: Date.now() - 1000, // Expired
         headers: {
-          'content-type': 'text/plain'
+          'content-type': MIME_TEXT
         },
         body: "OLD CONTENT"
       }, function() {});
@@ -544,12 +510,129 @@ describe('request-http-cache', function() {
 
       httpRequestCache.extension({
          url: 'https://api.github.com/unavailable2'
-        }, function(err, response, body) {
+        }, function(err, response) {
           assert(!err);
           assert.equal(response.statusCode, 500);
           assert(mockBackend.getContent.calledOnce);
           done();
         }, request);
+    });
+
+  });
+
+  describe('handle vary', function() {
+    it('should cache according to vary headers', function(done) {
+      httpRequestCache = new RequestHttpCache({
+      });
+
+      var jsonBody = JSON.stringify({ hello: 'there' });
+      var textBody = "Hello There";
+      var calls = 0;
+      var jsonRequest = 0;
+      var textRequest = 0;
+
+      var mockRequest = function(options, callback) {
+        assert.strictEqual(options.url, 'https://api.github.com/vary1');
+        calls++;
+        if (options.headers.accept == MIME_JSON) {
+          jsonRequest++;
+          return callback(null, {
+            statusCode: 200,
+            headers: {
+              etag: '1234',
+              vary: 'Accept',
+              'content-type': MIME_JSON,
+              'cache-control': 'private, max-age=60'
+            }
+          }, jsonBody);
+        } else if(options.headers.accept == MIME_TEXT) {
+          textRequest++;
+          return callback(null, {
+            statusCode: 200,
+            headers: {
+              etag: '4567',
+              vary: 'Accept',
+              'content-type': MIME_TEXT,
+              'cache-control': 'private, max-age=60'
+            }
+          }, textBody);
+        } else {
+          callback(new Error('Unknown request'));
+        }
+      };
+
+      // Plain-text
+      httpRequestCache.extension({
+        url: 'https://api.github.com/vary1',
+        headers: {
+          'accept': MIME_TEXT
+        }
+      }, function(err, response, body) {
+         if (err) return done(err);
+         assert.strictEqual(calls, 1);
+         assert.strictEqual(jsonRequest, 0);
+         assert.strictEqual(textRequest, 1);
+
+         assert.equal(response.statusCode, 200);
+         assert.equal(body, "Hello There");
+
+         // JSON
+         httpRequestCache.extension({
+           url: 'https://api.github.com/vary1',
+           headers: {
+             'accept': MIME_JSON
+           }
+         }, function(err, response, body) {
+            if (err) return done(err);
+
+            assert.strictEqual(calls, 2);
+            assert.strictEqual(jsonRequest, 1);
+            assert.strictEqual(textRequest, 1);
+
+            assert.equal(response.statusCode, 200);
+            assert.equal(body, jsonBody);
+
+            // Plain-text, cached
+            httpRequestCache.extension({
+              url: 'https://api.github.com/vary1',
+              headers: {
+                'accept': MIME_TEXT
+              }
+            }, function(err, response, body) {
+               if (err) return done(err);
+
+               assert.strictEqual(calls, 2);
+               assert.strictEqual(jsonRequest, 1);
+               assert.strictEqual(textRequest, 1);
+
+               assert.equal(response.statusCode, 200);
+               assert.equal(body, textBody);
+
+               // JSON, cached
+               httpRequestCache.extension({
+                 url: 'https://api.github.com/vary1',
+                 headers: {
+                   'accept': MIME_JSON
+                 }
+               }, function(err, response, body) {
+                  if (err) return done(err);
+
+                  assert.strictEqual(calls, 2);
+                  assert.strictEqual(jsonRequest, 1);
+                  assert.strictEqual(textRequest, 1);
+
+                  assert.equal(response.statusCode, 200);
+                  assert.equal(body, jsonBody);
+
+                  done();
+               }, mockRequest);
+
+            }, mockRequest);
+
+         }, mockRequest);
+
+      }, mockRequest);
+
     });
 
   });
