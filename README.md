@@ -16,9 +16,6 @@ This module is intended for use with [request-extensible](https://github.com/sup
 It is designed to honor the HTTP caching semantics used by the GitHub API and use
 Conditional Requests, using ETags, for stale responses while correctly handling Vary headers.
 
-In future, ideally this module would adhere to the HTTP specification and be
-useable for any API.
-
 ## Using
 
 ### Using with an in-memory Backend
