@@ -15,6 +15,45 @@ describe('gzipped-redis-backend', function() {
       backend = new GZippedRedisBackend();
     });
 
+    describe('vary headers', function() {
+
+      it('should return vary headers', function(done) {
+        var key = keyGenerator('https://api.github.com/', {}, null);
+
+        backend.store(key, {
+          url: 'https://api.github.com/',
+          statusCode: 200,
+          etag: 1234,
+          expiry: Date.now(),
+          headers: {
+            'content-type': 'application/json',
+            vary: 'accept'
+          }
+        }, function(err) {
+          if(err) return done(err);
+
+          backend.getVaryHeaders('https://api.github.com/', function(err, vary) {
+            if (err) return done(err);
+            assert.strictEqual(vary, 'accept');
+            done();
+          });
+        });
+
+      });
+
+
+      it('should not return vary if they are missing', function(done) {
+
+        backend.getVaryHeaders('https://_does_not_exist_/', function(err, vary) {
+          if (err) return done(err);
+          assert(!vary);
+          done();
+        });
+
+      });
+
+    });
+
     describe('store and retrieve', function() {
 
       it('should store cached content', function(done) {
