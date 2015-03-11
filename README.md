@@ -14,11 +14,7 @@ npm install request-http-cache
 This module is intended for use with [request-extensible](https://github.com/suprememoocow/request-extensible).
 
 It is designed to honor the HTTP caching semantics used by the GitHub API and use
-Conditional Requests, using ETags, for stale responses.
-
-Currently, it has been specifically designed for caching GitHub API responses.
-It makes some assumptions about access tokens and `Vary` headers which may result
-in incorrect results for other APIs, altough this is not necessarily the case.
+Conditional Requests, using ETags, for stale responses while correctly handling Vary headers.
 
 In future, ideally this module would adhere to the HTTP specification and be
 useable for any API.
@@ -81,7 +77,7 @@ request({ url: 'https://api.github.com/users/suprememoocow' }, function(err, res
 ```
 
 # Licence
-
+```
 License
 The MIT License (MIT)
 
@@ -104,3 +100,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
