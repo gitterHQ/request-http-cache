@@ -54,6 +54,33 @@ describe('gzipped-redis-backend', function() {
 
     });
 
+    describe('update expiry headers', function() {
+
+      it('should return update expiry', function(done) {
+        var key = keyGenerator('https://api.github.com/', {}, null);
+
+        backend.store(key, { url: 'https://api.github.com/', statusCode: 200, etag: 1234, expiry: Date.now() - 1000, headers: { 'Content-Type': 'application/json' } }, function(err) {
+          if (err) return done(err);
+
+          var newExpiry = Date.now() + 1000;
+          backend.updateExpiry('https://api.github.com/', key, newExpiry, function() {
+            if (err) return done(err);
+
+            backend.getEtagExpiry(key, function(err, etagExpiry) {
+              if (err) return done(err);
+              assert(etagExpiry);
+              assert.strictEqual(etagExpiry.expiry, newExpiry);
+              done();
+            });
+
+          });
+
+        });
+
+      });
+
+    });
+
     describe('store and retrieve', function() {
 
       it('should store cached content', function(done) {
