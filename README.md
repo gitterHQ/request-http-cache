@@ -9,7 +9,6 @@ with any request HTTP client.
 
 ```
 npm install request-http-cache
-
 ```
 
 ## About
@@ -75,7 +74,6 @@ request({ url: 'https://api.github.com/users/suprememoocow' }, function(err, res
 });
 ```
 
-
 # Under the Hood
 
 When a new outgoing request is made, the Vary headers for the URL endpoint are
@@ -98,6 +96,10 @@ looked up in the cache.
  * If the response is a 304, indicating that the data is still fresh, the cached response is used
  * Otherwise the response is cached and the Vary headers for the URL endpoint are stored
    the response is returned to the caller.  
+
+# Authors
+
+Built by [@suprememoocow](https://twitter.com/suprememoocow) and the team at Gitter.
 
 # Licence
 
