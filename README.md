@@ -2,11 +2,14 @@
 
 [![Build Status](https://travis-ci.org/gitterHQ/request-http-cache.svg?branch=master)](https://travis-ci.org/gitterHQ/request-http-cache) [![Coverage Status](https://coveralls.io/repos/gitterHQ/request-http-cache/badge.svg)](https://coveralls.io/r/gitterHQ/request-http-cache)
 
-A request "middleware" for caching HTTP responses in-memory or in Redis. Specifically built for
-Gitter's communications with GitHub.
+A [request](https://github.com/request/request) "middleware" for caching HTTP responses in-memory or in Redis. Built for
+Gitter's communications with GitHub as part of [Tentacles](https://github.com/gitterHQ/tentacles),
+although it's intended as a general purpose HTTP caching module that should work
+with any request HTTP client.
 
 ```
 npm install request-http-cache
+
 ```
 
 ## About
@@ -70,10 +73,34 @@ var request = requestExt({
 request({ url: 'https://api.github.com/users/suprememoocow' }, function(err, response, body) {
 
 });
-
 ```
 
+
+# Under the Hood
+
+When a new outgoing request is made, the Vary headers for the URL endpoint are
+looked up in the cache.
+
+### Outgoing
+
+ * If the Vary headers for the endpoint are not known (ie, the URL has not been cached),
+   the request proceeds as normal.
+ * If the Vary headers are available, a SHA1 hash of the URL plus the requested headers
+   specified by the Vary is generated. Although the chance of a hash entry collision is rare,
+   the library does deal with this situation and treats it as a cache miss.
+ * The Etag and Expiry headers for the previous cached response are looked up using the
+   hash.
+ * If the response has not yet expired, it is returned immediately.
+ * If the response has expired, the request is issued with a `If-None-Match` header
+
+### Incoming
+ * If the response is in error or a 500 status code, the cached response is used.
+ * If the response is a 304, indicating that the data is still fresh, the cached response is used
+ * Otherwise the response is cached and the Vary headers for the URL endpoint are stored
+   the response is returned to the caller.  
+
 # Licence
+
 ```
 License
 The MIT License (MIT)
