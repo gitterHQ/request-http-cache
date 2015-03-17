@@ -97,9 +97,17 @@ looked up in the cache.
  * Otherwise the response is cached and the Vary headers for the URL endpoint are stored
    the response is returned to the caller.  
 
+# TODO
+
+ * Support for `If-Modified-Since` conditional responses (currently only uses ETags)
+ * Better handling of `Cache-Control` headers
+ * Better handling of `Expires` headers (currently only uses `Cache-Control`'s `max-age`)
+
+Pull requests welcome.
+
 # Authors
 
-Built by [@suprememoocow](https://twitter.com/suprememoocow) and the team at Gitter.
+Built by [@suprememoocow](https://twitter.com/suprememoocow) and the team at [Gitter](https://gitter.im).
 
 # Licence
 
