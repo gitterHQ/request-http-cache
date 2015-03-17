@@ -34,7 +34,11 @@ describe('integration-test', function() {
 
     makeRequest(process.env.GITHUB_TOKEN_1, 'gitterawesome', function() {
       makeRequest(process.env.GITHUB_TOKEN_2, 'gittertestbot', function() {
-        done();
+        makeRequest(process.env.GITHUB_TOKEN_1, 'gitterawesome', function() {
+          makeRequest(process.env.GITHUB_TOKEN_2, 'gittertestbot', function() {
+            done();
+          });
+        });
       });
     });
 
