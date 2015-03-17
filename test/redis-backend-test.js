@@ -1,8 +1,8 @@
-var GZippedRedisBackend = require('../lib/gzipped-redis-backend');
+var RedisBackend = require('../lib/redis-backend');
 var assert = require('assert');
 var keyGenerator = require('../lib/key-generator');
 
-describe('gzipped-redis-backend', function() {
+describe('redis-backend', function() {
 
   describe('initialisation', function() {
 
@@ -12,7 +12,7 @@ describe('gzipped-redis-backend', function() {
     var backend;
 
     beforeEach(function() {
-      backend = new GZippedRedisBackend();
+      backend = new RedisBackend();
     });
 
     describe('vary headers', function() {
