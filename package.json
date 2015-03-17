@@ -1,6 +1,6 @@
 {
   "name": "request-http-cache",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "HTTP Caching extension for request-extensible",
   "main": "lib/index.js",
   "scripts": {
