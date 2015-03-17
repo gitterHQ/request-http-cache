@@ -58,4 +58,13 @@ describe('key-generator', function() {
     assert(k2);
     assert.strictEqual(k1, k2);
   });
+
+
+  it('should handle case insensitivity of request headers ', function() {
+    var k1 = keyGenerator('https://api.github.com/v1', { accePT: 'application/json', authorization: 'x' }, 'aCCept,AuthorizaTIon');
+    var k2 = keyGenerator('https://api.github.com/v1', { accept: 'application/json', AUthorizatioN: 'x' }, 'AccePT,authorizatioN');
+    assert(k1);
+    assert(k2);
+    assert.strictEqual(k1, k2);
+  });
 });

@@ -3,8 +3,12 @@ node_js:
 - '0.11'
 - '0.10'
 services:
-  - redis-server
+- redis-server
 before_script:
 - npm install
 script: "./node_modules/.bin/gulp"
-after_success: ./node_modules/.bin/coveralls --verbose < output/coverage/lcov.info
+after_success: "./node_modules/.bin/coveralls --verbose < output/coverage/lcov.info"
+env:
+  global:
+  - secure: aTXhsAbTX6+hdTzFD1OOTk+lS3+Wxl+38Zz6OsT/i5pwy0Gmcuqf84N0aO8qi8jEkmPXOOE5Lm5159mKwdJqxefaPVduwfInbLsgWkB7nN2u3L47yBxwwEBVicNlaXY2ZEXxSECP12Z93284zAta/jKzwCserKF8phGSlkwj3KE=
+  - secure: N4NuJmCkhNBPiBSruz9swK18tJOoRPd82I9ciYSf7p4O/IlXvmRNdd9kl8WRXDP3o5EntK00uyZpBc5ZoWz4IWwt2BhXfZBOuhUwXtWAAhKlYDIu2dnkqGQ2IRescVCWt+x7XlYqgXZe3H0Ye+zflnI3BfgH1s/VIpUJnAS5W+4=
