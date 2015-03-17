@@ -637,5 +637,152 @@ describe('request-http-cache', function() {
 
   });
 
+  describe('hash collisions', function() {
+    it('should treat hash collisions as cache missed', function(done) {
+      var mockBackend = new RequestHttpCache.backends.InMemory();
+      var k = keyGenerator('https://api.github.com/xxxx', {}, null);
+      var calls = 0;
+      mockBackend.store(k, {
+        url: 'https://api.github.com/yyyyy', // <-- NB
+        statusCode: 200,
+        etag: '2345',
+        expiry: Date.now() + 1000, // Not expired
+        headers: {
+          'content-type': MIME_TEXT
+        },
+        body: "WRONG"
+      }, function() {});
+
+      var httpRequestCache = new RequestHttpCache({
+        backend: mockBackend
+      });
+
+
+      var mockRequest = function(options, callback) {
+        assert.strictEqual(options.url, 'https://api.github.com/xxxx');
+        calls++;
+        callback(null, { statusCode: 200 }, "hello");
+      };
+
+      httpRequestCache.extension({ url: 'https://api.github.com/xxxx' }, function(err, response, body) {
+        if (err) return done(err);
+        assert.strictEqual(body, "hello");
+        assert.strictEqual(calls, 1);
+        done();
+      }, mockRequest);
+
+    });
+
+    it('should treat hash collisions as cache missed during content fetch', function(done) {
+      var mockBackend = new RequestHttpCache.backends.InMemory();
+      var k = keyGenerator('https://api.github.com/xxxx', {}, null);
+      var calls = 0;
+      mockBackend.store(k, {
+        url: 'https://api.github.com/xxxx', // <-- NB
+        statusCode: 200,
+        etag: '2345',
+        expiry: Date.now() + 1000, // Not expired
+        headers: {
+          'content-type': MIME_TEXT
+        },
+        body: "WRONG"
+      }, function() {});
+
+      mockBackend.getEtagExpiry = function(key, callback) {
+        mockBackend.store(k, {
+          url: 'https://api.github.com/yyyy', // <-- NB
+          statusCode: 200,
+          etag: '2345',
+          expiry: Date.now() + 1000, // Not expired
+          headers: {
+            'content-type': MIME_TEXT
+          },
+          body: "WRONG"
+        }, function() {});
+  
+        return callback(null, {
+          url: 'https://api.github.com/xxxx', // <-- NB
+          etag: '2345',
+          expiry: Date.now() + 1000, // Not expired
+        });
+      };
+
+      var httpRequestCache = new RequestHttpCache({
+        backend: mockBackend
+      });
+
+      var mockRequest = function(options, callback) {
+        assert.strictEqual(options.url, 'https://api.github.com/xxxx');
+        calls++;
+        callback(null, { statusCode: 200 }, "hello");
+      };
+
+      httpRequestCache.extension({ url: 'https://api.github.com/xxxx' }, function(err, response, body) {
+        if (err) return done(err);
+        assert.strictEqual(body, "hello");
+        assert.strictEqual(calls, 1);
+        done();
+      }, mockRequest);
+
+    });
+
+  });
+
+  describe('backend errors', function() {
+    var mockBackend, httpRequestCache, mockRequest, calls;
+
+    beforeEach(function() {
+      calls = 0;
+      mockBackend = new RequestHttpCache.backends.InMemory();
+      httpRequestCache = new RequestHttpCache({
+        backend: mockBackend
+      });
+      mockRequest = function(options, callback) {
+        calls++;
+        callback(null, { statusCode: 200 }, "hello");
+      };
+    });
+
+    it('should deal with getVaryHeaders errors', function(done) {
+      mockBackend.getVaryHeaders = function(url, callback) {
+        assert.strictEqual(url, 'https://api.github.com/x');
+        callback(new Error('fail'));
+      };
+
+      httpRequestCache.extension({ url: 'https://api.github.com/x' }, function(err, response, body) {
+        assert.strictEqual(body, "hello");
+        assert.strictEqual(calls, 1);
+        done();
+      }, mockRequest);
+
+    });
+
+    it('should deal with getEtagExpiry errors', function(done) {
+      var k = keyGenerator('https://api.github.com/x', {}, null);
+
+      mockBackend.getEtagExpiry = function(key, callback) {
+        assert.strictEqual(key, k);
+        callback(new Error('fail'));
+      };
+
+      mockBackend.store(k, {
+        url: 'https://api.github.com/x', // <-- NB
+        statusCode: 200,
+        etag: '2345',
+        expiry: Date.now() - 1000, // Expired
+        body: "WRONG"
+      }, function() {});
+
+      httpRequestCache.extension({ url: 'https://api.github.com/x' }, function(err, response, body) {
+        assert.strictEqual(body, "hello");
+        assert.strictEqual(calls, 1);
+        done();
+      }, mockRequest);
+
+    });
+
+
+  });
+
 
 });

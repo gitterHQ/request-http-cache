@@ -6,6 +6,7 @@ gulp.task('test', function() {
     .src(['test/*.test.js'])
     .pipe(mocha({
       env: { },
+      timeout: 10000,
       istanbul: {
         dir: 'output/coverage/'
       }
