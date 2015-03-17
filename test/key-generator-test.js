@@ -62,6 +62,7 @@ describe('key-generator', function() {
   it('should handle case insensitivity of request headers ', function() {
     var k1 = keyGenerator('https://api.github.com/v1', { accePT: 'application/json', authorization: 'x' }, 'aCCept,AuthorizaTIon');
     var k2 = keyGenerator('https://api.github.com/v1', { accept: 'application/json', AUthorizatioN: 'x' }, 'AccePT,authorizatioN');
+
     assert(k1);
     assert(k2);
     assert.strictEqual(k1, k2);
@@ -79,6 +80,14 @@ describe('key-generator', function() {
   it('should treat missing fields and empty fields equally', function() {
     var k1 = keyGenerator('https://api.github.com/v1', { }, 'aCCept,AuthorizaTIon');
     var k2 = keyGenerator('https://api.github.com/v1', { accept: '' }, 'AccePT,authorizatioN');
+    assert(k1);
+    assert(k2);
+    assert.strictEqual(k1, k2);
+  });
+
+  it('should generate the same key for different Vary field order', function() {
+    var k1 = keyGenerator('https://api.github.com/v1', { accept: 'application/json' }, 'AuthorizaTIon, aCCept');
+    var k2 = keyGenerator('https://api.github.com/v1', { accept: 'application/json' }, 'AccePT,authorizatioN');
     assert(k1);
     assert(k2);
     assert.strictEqual(k1, k2);
