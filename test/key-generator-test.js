@@ -84,5 +84,16 @@ describe('key-generator', function() {
     assert.strictEqual(k1, k2);
   });
 
+  it('should treat missing and null header fields equally', function() {
+    var k1 = keyGenerator('https://api.github.com/v1', null, 'aCCept,AuthorizaTIon');
+    var k2 = keyGenerator('https://api.github.com/v1', { accept: '' }, 'AccePT,authorizatioN');
+    var k3 = keyGenerator('https://api.github.com/v1', { }, 'AccePt,authorizatioN');
+    assert(k1);
+    assert(k2);
+    assert(k3);
+    assert.strictEqual(k1, k2);
+    assert.strictEqual(k2, k3);
+  });
+
 
 });
