@@ -95,7 +95,7 @@ describe('redis-backend', function() {
             if (err) return done(err);
             assert(result);
             assert.strictEqual(result.url, 'https://api.github.com/');
-            assert.strictEqual(result.statusCode, "200");
+            assert.strictEqual(result.statusCode, 200);
             assert.strictEqual(result.body, "Hello There, how are you today?");
             assert.deepEqual(result.headers, { 'Content-Type': 'application/json' });
             done();
