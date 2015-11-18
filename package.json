@@ -29,7 +29,7 @@
     "gulp-spawn-mocha": "^2.0.1",
     "mocha": "^2.1.0",
     "nock": "^0.59.1",
-    "request": "^2.53.0",
+    "request": "2.61.1",
     "request-http-cache-protobuf-serializer": "^0.1.1",
     "request-http-cache-snappy-compressor": "^0.1.1",
     "sinon": "^1.13.0",
