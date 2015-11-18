@@ -97,6 +97,24 @@ looked up in the cache.
  * Otherwise the response is cached and the Vary headers for the URL endpoint are stored
    the response is returned to the caller.  
 
+# Support for snappy compression and/or protobuf serialization
+
+Snappy compression and protobuf serialization of cached data is supported. However
+in tests, it is generally slower than JSON and no compression, so it's disabled
+by default.
+
+To enable it, use one of both of the `serializer` and/or `compressor` options:
+```js
+var httpRequestCache = new RequestHttpCache({
+  backend: 'redis',
+  serializer: require('request-http-cache-protobuf-serializer'),
+  compressor: require('request-http-cache-snappy-compressor')
+});
+```
+
+You will need to require the respective modules as these are no longer shipped
+with `request-http-cache`.
+
 # TODO
 
  * Support for `If-Modified-Since` conditional responses (currently only uses ETags)
