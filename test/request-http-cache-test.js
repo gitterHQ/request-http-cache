@@ -257,6 +257,105 @@ describe('request-http-cache', function() {
       });
 
     });
+
+    describe('it should handle json initial requests', function() {
+
+        describe('when subsequent request is json', function() {
+            var httpRequestCache;
+            var err, path, response, body;
+
+            beforeEach(function(done) {
+              var mockBackend = new RequestHttpCache.backends.InMemory();
+              var k = keyGenerator('https://api.github.com' + path, {}, null);
+
+              mockBackend.store(k, {
+                url: 'https://api.github.com' + path,
+                statusCode: 200,
+                etag: '1234',
+                expiry: Date.now() + 1000,
+                headers: {
+                  'content-type': MIME_JSON
+                },
+                body: { hello: 'cached' } // JSON data
+              }, function() {});
+
+              httpRequestCache = new RequestHttpCache({
+                backend: mockBackend
+              });
+
+              httpRequestCache.extension({
+                 url: 'https://api.github.com' + path,
+                 json: true
+                }, function(_err, _response, _body) {
+                err = _err;
+                response = _response;
+                body = _body;
+                done();
+               }, request);
+
+            });
+
+
+            before(function() {
+              path = '/hit1';
+            });
+
+            it('should return cached response', function() {
+              assert(!err);
+              assert.strictEqual(response.statusCode, 200);
+              assert.strictEqual(response.headers['content-type'], MIME_JSON);
+              assert.deepEqual(body, { hello: 'cached' });
+            });
+        });
+
+        describe('when subsequent request is not json', function() {
+            var httpRequestCache;
+            var err, path, response, body;
+
+            beforeEach(function(done) {
+              var mockBackend = new RequestHttpCache.backends.InMemory();
+              var k = keyGenerator('https://api.github.com' + path, {}, null);
+
+              mockBackend.store(k, {
+                url: 'https://api.github.com' + path,
+                statusCode: 200,
+                etag: '1234',
+                expiry: Date.now() + 1000,
+                headers: {
+                  'content-type': MIME_JSON
+                },
+                body: { hello: 'cached' } // JSON data
+              }, function() {});
+
+              httpRequestCache = new RequestHttpCache({
+                backend: mockBackend
+              });
+
+              httpRequestCache.extension({
+                 url: 'https://api.github.com' + path,
+                 json: false
+                }, function(_err, _response, _body) {
+                err = _err;
+                response = _response;
+                body = _body;
+                done();
+               }, request);
+
+            });
+
+
+            before(function() {
+              path = '/hit1';
+            });
+
+            it('should return cached response', function() {
+              assert(!err);
+              assert.strictEqual(response.statusCode, 200);
+              assert.strictEqual(response.headers['content-type'], MIME_JSON);
+              assert.deepEqual(body, "{\"hello\":\"cached\"}");
+            });
+        });
+    });
   });
 
   describe('backend failures', function() {
