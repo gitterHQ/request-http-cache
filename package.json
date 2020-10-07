@@ -38,9 +38,9 @@
   "dependencies": {
     "debug": "^2.1.2",
     "json-buffer": "^2.0.11",
-    "lodash": "^3.3.1",
+    "lodash": "^4.17.11",
     "lru-cache": "^2.5.0",
     "redis": "^0.12.1",
-    "wreck": "^5.2.0"
+    "wreck": "^14.1.0"
   }
 }
